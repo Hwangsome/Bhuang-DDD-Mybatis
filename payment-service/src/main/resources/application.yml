@@ -1,0 +1,44 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: payment-service
+  profiles:
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: ecommerce
+        group: DEFAULT_GROUP
+  
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ecommerce_payment?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: root
+
+  redis:
+    host: localhost
+    port: 6379
+    database: 4
+
+# gRPC Configuration
+grpc:
+  server:
+    port: 9085
+    enable-reflection: true
+
+# MyBatis Plus Configuration
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+  global-config:
+    db-config:
+      id-type: auto
+
+# Logging Configuration
+logging:
+  level:
+    com.ecommerce.payment: DEBUG

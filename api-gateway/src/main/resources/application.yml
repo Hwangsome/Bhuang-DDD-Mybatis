@@ -1,0 +1,234 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: api-gateway
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        namespace: ecommerce
+        group: DEFAULT_GROUP
+      config:
+        server-addr: localhost:8848
+        namespace: ecommerce
+        group: DEFAULT_GROUP
+        file-extension: yml
+    
+    gateway:
+      # 服务发现路由配置
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      
+      # 路由规则配置
+      routes:
+        # 用户相关API路由
+        - id: user-routes
+          uri: lb://orchestrator-service
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: user-circuit-breaker
+                fallbackUri: forward:/fallback/user
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
+            - name: Retry
+              args:
+                retries: 3
+                statuses: BAD_GATEWAY,GATEWAY_TIMEOUT
+                methods: GET,POST
+        
+        # 商品相关API路由
+        - id: product-routes
+          uri: lb://orchestrator-service
+          predicates:
+            - Path=/api/v1/products/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: product-circuit-breaker
+                fallbackUri: forward:/fallback/product
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+                key-resolver: "#{@ipKeyResolver}"
+        
+        # 订单相关API路由
+        - id: order-routes
+          uri: lb://orchestrator-service
+          predicates:
+            - Path=/api/v1/orders/**
+          filters:
+            - name: Auth
+            - name: CircuitBreaker
+              args:
+                name: order-circuit-breaker
+                fallbackUri: forward:/fallback/order
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 30
+                redis-rate-limiter.burstCapacity: 60
+                key-resolver: "#{@userKeyResolver}"
+        
+        # 支付相关API路由
+        - id: payment-routes
+          uri: lb://orchestrator-service
+          predicates:
+            - Path=/api/v1/payments/**
+          filters:
+            - name: Auth
+            - name: CircuitBreaker
+              args:
+                name: payment-circuit-breaker
+                fallbackUri: forward:/fallback/payment
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+      
+      # 全局过滤器
+      default-filters:
+        - name: GlobalRequestLog
+        - name: GlobalResponseLog
+        - name: CORS
+          args:
+            allowed-origins: 
+              - "http://localhost:3000"
+              - "https://ecommerce.example.com"
+            allowed-methods: 
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            allow-credentials: true
+            max-age: 3600
+
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-wait: -1ms
+          max-idle: 10
+          min-idle: 5
+
+  # 安全配置
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9999/.well-known/jwks.json
+
+# 熔断器配置
+resilience4j:
+  circuitbreaker:
+    instances:
+      user-circuit-breaker:
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+      
+      product-circuit-breaker:
+        slidingWindowSize: 20
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 60
+        waitDurationInOpenState: 15s
+      
+      order-circuit-breaker:
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 40
+        waitDurationInOpenState: 30s
+      
+      payment-circuit-breaker:
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        minimumNumberOfCalls: 3
+        failureRateThreshold: 30
+        waitDurationInOpenState: 60s
+
+# 监控和日志配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.web.reactive: DEBUG
+    reactor.netty: DEBUG
+    com.ecommerce.gateway: DEBUG
+  pattern:
+    console: "%clr(%d{HH:mm:ss.SSS}){faint} %clr(${LOG_LEVEL_PATTERN:-%5p}) %clr([%t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}"
+
+# JWT配置
+jwt:
+  secret: "ecommerce-jwt-secret-key-change-in-production"
+  expiration: 86400000  # 24小时
+  header: Authorization
+  prefix: "Bearer "
+
+# 自定义配置
+gateway:
+  # 白名单路径 - 无需认证
+  whitelist:
+    paths:
+      - /api/v1/users/register
+      - /api/v1/users/login
+      - /api/v1/products/**
+      - /actuator/**
+      - /fallback/**
+  
+  # 跨域配置
+  cors:
+    enabled: true
+    allowed-origins:
+      - "http://localhost:3000"
+      - "https://ecommerce.example.com"
+    allowed-methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - OPTIONS
+    allowed-headers: "*"
+    allow-credentials: true
+    max-age: 3600

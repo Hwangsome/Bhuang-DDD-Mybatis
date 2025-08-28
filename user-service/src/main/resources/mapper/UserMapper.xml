@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ecommerce.user.infrastructure.mapper.UserDataMapper">
+
+    <!-- 用户数据对象映射 -->
+    <resultMap id="UserDataObjectMap" type="com.ecommerce.user.infrastructure.mapper.UserDataObject">
+        <id property="userId" column="user_id" />
+        <result property="username" column="username" />
+        <result property="email" column="email" />
+        <result property="phone" column="phone" />
+        <result property="phoneCountryCode" column="phone_country_code" />
+        <result property="firstName" column="first_name" />
+        <result property="lastName" column="last_name" />
+        <result property="avatarUrl" column="avatar_url" />
+        <result property="status" column="status" />
+        <result property="type" column="type" />
+        <result property="addressCountry" column="address_country" />
+        <result property="addressProvince" column="address_province" />
+        <result property="addressCity" column="address_city" />
+        <result property="addressDistrict" column="address_district" />
+        <result property="addressStreet" column="address_street" />
+        <result property="addressPostalCode" column="address_postal_code" />
+        <result property="addressContactName" column="address_contact_name" />
+        <result property="addressContactPhone" column="address_contact_phone" />
+        <result property="createdAt" column="created_at" />
+        <result property="updatedAt" column="updated_at" />
+        <result property="createdBy" column="created_by" />
+        <result property="updatedBy" column="updated_by" />
+        <result property="version" column="version" />
+        <result property="deleted" column="deleted" />
+    </resultMap>
+
+    <!-- 插入用户 -->
+    <insert id="insert" parameterType="com.ecommerce.user.infrastructure.mapper.UserDataObject">
+        INSERT INTO users (
+            user_id, username, email, phone, phone_country_code,
+            first_name, last_name, avatar_url, status, type,
+            address_country, address_province, address_city, address_district,
+            address_street, address_postal_code, address_contact_name, address_contact_phone,
+            created_at, updated_at, created_by, updated_by, version, deleted
+        ) VALUES (
+            #{userId}, #{username}, #{email}, #{phone}, #{phoneCountryCode},
+            #{firstName}, #{lastName}, #{avatarUrl}, #{status}, #{type},
+            #{addressCountry}, #{addressProvince}, #{addressCity}, #{addressDistrict},
+            #{addressStreet}, #{addressPostalCode}, #{addressContactName}, #{addressContactPhone},
+            #{createdAt}, #{updatedAt}, #{createdBy}, #{updatedBy}, #{version}, #{deleted}
+        )
+    </insert>
+
+    <!-- 更新用户 -->
+    <update id="update" parameterType="com.ecommerce.user.infrastructure.mapper.UserDataObject">
+        UPDATE users SET
+            username = #{username},
+            email = #{email},
+            phone = #{phone},
+            phone_country_code = #{phoneCountryCode},
+            first_name = #{firstName},
+            last_name = #{lastName},
+            avatar_url = #{avatarUrl},
+            status = #{status},
+            type = #{type},
+            address_country = #{addressCountry},
+            address_province = #{addressProvince},
+            address_city = #{addressCity},
+            address_district = #{addressDistrict},
+            address_street = #{addressStreet},
+            address_postal_code = #{addressPostalCode},
+            address_contact_name = #{addressContactName},
+            address_contact_phone = #{addressContactPhone},
+            updated_at = #{updatedAt},
+            updated_by = #{updatedBy},
+            version = #{version}
+        WHERE user_id = #{userId} AND version = #{version} - 1 AND deleted = 0
+    </update>
+
+    <!-- 根据ID查询用户 -->
+    <select id="selectById" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE user_id = #{userId} AND deleted = 0
+    </select>
+
+    <!-- 根据用户名查询用户 -->
+    <select id="selectByUsername" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE username = #{username} AND deleted = 0
+    </select>
+
+    <!-- 根据邮箱查询用户 -->
+    <select id="selectByEmail" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE email = #{email} AND deleted = 0
+    </select>
+
+    <!-- 根据手机号查询用户 -->
+    <select id="selectByPhone" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE phone = #{phone} AND deleted = 0
+    </select>
+
+    <!-- 批量查询用户 -->
+    <select id="selectByIds" parameterType="list" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE user_id IN
+        <foreach collection="list" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        AND deleted = 0
+    </select>
+
+    <!-- 检查用户名是否存在 -->
+    <select id="existsByUsername" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users
+        WHERE username = #{username} AND deleted = 0
+    </select>
+
+    <!-- 检查邮箱是否存在 -->
+    <select id="existsByEmail" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users
+        WHERE email = #{email} AND deleted = 0
+    </select>
+
+    <!-- 检查手机号是否存在 -->
+    <select id="existsByPhone" parameterType="string" resultType="boolean">
+        SELECT COUNT(*) > 0 FROM users
+        WHERE phone = #{phone} AND deleted = 0
+    </select>
+
+    <!-- 搜索用户 -->
+    <select id="searchUsers" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE deleted = 0
+        <if test="keyword != null and keyword != ''">
+            AND (username LIKE CONCAT('%', #{keyword}, '%')
+                 OR first_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR last_name LIKE CONCAT('%', #{keyword}, '%')
+                 OR email LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+            AND status = #{status}
+        </if>
+        <if test="type != null">
+            AND type = #{type}
+        </if>
+        ORDER BY created_at DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 根据状态查询用户 -->
+    <select id="findByStatus" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE status = #{status} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据类型查询用户 -->
+    <select id="findByType" parameterType="string" resultMap="UserDataObjectMap">
+        SELECT * FROM users
+        WHERE type = #{type} AND deleted = 0
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 根据状态统计用户数量 -->
+    <select id="countByStatus" parameterType="string" resultType="long">
+        SELECT COUNT(*) FROM users
+        WHERE status = #{status} AND deleted = 0
+    </select>
+
+    <!-- 批量更新用户状态 -->
+    <update id="updateStatusBatch">
+        UPDATE users SET
+            status = #{status},
+            updated_at = #{updatedAt}
+        WHERE user_id IN
+        <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+            #{userId}
+        </foreach>
+        AND deleted = 0
+    </update>
+
+    <!-- 软删除用户 -->
+    <update id="softDelete" parameterType="string">
+        UPDATE users SET
+            deleted = 1,
+            updated_at = NOW()
+        WHERE user_id = #{userId} AND deleted = 0
+    </update>
+
+</mapper>

@@ -1,0 +1,339 @@
+syntax = "proto3";
+
+package ecommerce.notification;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.notification.proto";
+option java_outer_classname = "NotificationServiceProto";
+
+// 通知服务接口
+service NotificationService {
+  // 发送通知
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  
+  // 发送邮件
+  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse);
+  
+  // 发送短信
+  rpc SendSMS(SendSMSRequest) returns (SendSMSResponse);
+  
+  // 发送推送通知
+  rpc SendPushNotification(SendPushNotificationRequest) returns (SendPushNotificationResponse);
+  
+  // 批量发送通知
+  rpc BatchSendNotification(BatchSendNotificationRequest) returns (BatchSendNotificationResponse);
+  
+  // 获取通知历史
+  rpc GetNotificationHistory(GetNotificationHistoryRequest) returns (GetNotificationHistoryResponse);
+  
+  // 获取通知模板
+  rpc GetNotificationTemplate(GetNotificationTemplateRequest) returns (GetNotificationTemplateResponse);
+  
+  // 创建通知模板
+  rpc CreateNotificationTemplate(CreateNotificationTemplateRequest) returns (NotificationTemplateResponse);
+  
+  // 获取用户通知设置
+  rpc GetUserNotificationSettings(GetUserNotificationSettingsRequest) returns (UserNotificationSettingsResponse);
+  
+  // 更新用户通知设置
+  rpc UpdateUserNotificationSettings(UpdateUserNotificationSettingsRequest) returns (UserNotificationSettingsResponse);
+}
+
+// 通知渠道枚举
+enum NotificationChannel {
+  NOTIFICATION_CHANNEL_UNSPECIFIED = 0;
+  EMAIL = 1;                     // 邮件
+  SMS = 2;                       // 短信
+  PUSH = 3;                      // 推送通知
+  IN_APP = 4;                    // 应用内通知
+  WECHAT = 5;                    // 微信通知
+  WEBHOOK = 6;                   // Webhook
+}
+
+// 通知类型枚举
+enum NotificationType {
+  NOTIFICATION_TYPE_UNSPECIFIED = 0;
+  USER_REGISTRATION = 1;         // 用户注册
+  ORDER_CREATED = 2;             // 订单创建
+  ORDER_PAID = 3;                // 订单支付
+  ORDER_SHIPPED = 4;             // 订单发货
+  ORDER_DELIVERED = 5;           // 订单送达
+  ORDER_CANCELLED = 6;           // 订单取消
+  PAYMENT_SUCCESS = 7;           // 支付成功
+  PAYMENT_FAILED = 8;            // 支付失败
+  REFUND_PROCESSED = 9;          // 退款处理
+  STOCK_ALERT = 10;              // 库存预警
+  SYSTEM_MAINTENANCE = 11;       // 系统维护
+  PROMOTIONAL_OFFER = 12;        // 促销活动
+  PASSWORD_RESET = 13;           // 密码重置
+  SECURITY_ALERT = 14;           // 安全警告
+}
+
+// 通知状态枚举
+enum NotificationStatus {
+  NOTIFICATION_STATUS_UNSPECIFIED = 0;
+  NOTIFICATION_PENDING = 1;      // 待发送
+  NOTIFICATION_SENT = 2;         // 已发送
+  NOTIFICATION_DELIVERED = 3;    // 已送达
+  NOTIFICATION_FAILED = 4;       // 发送失败
+  NOTIFICATION_READ = 5;         // 已读
+}
+
+// 通知优先级枚举
+enum NotificationPriority {
+  NOTIFICATION_PRIORITY_UNSPECIFIED = 0;
+  LOW = 1;                       // 低优先级
+  NORMAL = 2;                    // 普通优先级
+  HIGH = 3;                      // 高优先级
+  URGENT = 4;                    // 紧急
+}
+
+// 通知实体
+message Notification {
+  string notification_id = 1;    // 通知ID
+  string user_id = 2;            // 用户ID
+  NotificationType type = 3;     // 通知类型
+  NotificationChannel channel = 4; // 通知渠道
+  NotificationStatus status = 5; // 通知状态
+  NotificationPriority priority = 6; // 通知优先级
+  string title = 7;              // 通知标题
+  string content = 8;            // 通知内容
+  string template_id = 9;        // 模板ID
+  map<string, string> template_params = 10; // 模板参数
+  string recipient = 11;         // 接收人 (邮箱、手机号等)
+  string sender = 12;            // 发送人
+  string reference_id = 13;      // 关联业务ID
+  string reference_type = 14;    // 关联业务类型
+  map<string, string> metadata = 15; // 元数据
+  common.Timestamp sent_time = 16; // 发送时间
+  common.Timestamp delivered_time = 17; // 送达时间
+  common.Timestamp read_time = 18; // 读取时间
+  int32 retry_count = 19;        // 重试次数
+  string error_message = 20;     // 错误信息
+  common.Timestamp created_at = 21; // 创建时间
+  common.Timestamp updated_at = 22; // 更新时间
+}
+
+// 通知模板
+message NotificationTemplate {
+  string template_id = 1;        // 模板ID
+  string template_name = 2;      // 模板名称
+  NotificationType type = 3;     // 通知类型
+  NotificationChannel channel = 4; // 通知渠道
+  string title_template = 5;     // 标题模板
+  string content_template = 6;   // 内容模板
+  repeated string required_params = 7; // 必需参数列表
+  map<string, string> default_params = 8; // 默认参数
+  bool active = 9;               // 是否启用
+  common.Timestamp created_at = 10; // 创建时间
+  common.Timestamp updated_at = 11; // 更新时间
+}
+
+// 用户通知设置
+message UserNotificationSettings {
+  string user_id = 1;            // 用户ID
+  map<string, bool> type_settings = 2; // 通知类型设置 (key: NotificationType, value: enabled)
+  map<string, bool> channel_settings = 3; // 通知渠道设置 (key: NotificationChannel, value: enabled)
+  bool global_enabled = 4;       // 全局开关
+  string timezone = 5;           // 时区设置
+  int32 quiet_start_hour = 6;    // 免打扰开始时间(小时)
+  int32 quiet_end_hour = 7;      // 免打扰结束时间(小时)
+  common.Timestamp created_at = 8; // 创建时间
+  common.Timestamp updated_at = 9; // 更新时间
+}
+
+// 发送通知请求
+message SendNotificationRequest {
+  string user_id = 1;            // 用户ID
+  NotificationType type = 2;     // 通知类型
+  NotificationChannel channel = 3; // 通知渠道
+  optional NotificationPriority priority = 4; // 通知优先级
+  oneof content_source {
+    NotificationContent direct_content = 5; // 直接内容
+    TemplateContent template_content = 6; // 模板内容
+  }
+  optional string recipient = 7; // 接收人覆盖
+  optional string reference_id = 8; // 关联业务ID
+  optional string reference_type = 9; // 关联业务类型
+  map<string, string> metadata = 10; // 元数据
+  optional bool immediate = 11;  // 是否立即发送 (忽略免打扰时间)
+}
+
+// 直接通知内容
+message NotificationContent {
+  string title = 1;              // 通知标题
+  string content = 2;            // 通知内容
+}
+
+// 模板通知内容
+message TemplateContent {
+  string template_id = 1;        // 模板ID
+  map<string, string> params = 2; // 模板参数
+}
+
+// 发送邮件请求
+message SendEmailRequest {
+  string user_id = 1;            // 用户ID
+  string to_email = 2;           // 收件人邮箱
+  string subject = 3;            // 邮件主题
+  string html_content = 4;       // HTML内容
+  optional string text_content = 5; // 纯文本内容
+  optional string from_email = 6; // 发件人邮箱
+  optional string from_name = 7; // 发件人姓名
+  repeated string cc_emails = 8; // 抄送邮箱列表
+  repeated string bcc_emails = 9; // 密送邮箱列表
+  repeated EmailAttachment attachments = 10; // 附件列表
+  optional NotificationPriority priority = 11; // 邮件优先级
+}
+
+// 邮件附件
+message EmailAttachment {
+  string filename = 1;           // 文件名
+  string content_type = 2;       // 内容类型
+  bytes content = 3;             // 文件内容
+  optional string url = 4;       // 文件URL (二选一)
+}
+
+// 发送短信请求
+message SendSMSRequest {
+  string user_id = 1;            // 用户ID
+  string phone_number = 2;       // 手机号
+  string message = 3;            // 短信内容
+  optional string template_id = 4; // 短信模板ID
+  map<string, string> template_params = 5; // 模板参数
+  optional NotificationPriority priority = 6; // 短信优先级
+}
+
+// 发送推送通知请求
+message SendPushNotificationRequest {
+  string user_id = 1;            // 用户ID
+  string device_token = 2;       // 设备Token
+  string title = 3;              // 推送标题
+  string body = 4;               // 推送内容
+  map<string, string> data = 5;  // 自定义数据
+  optional string image_url = 6; // 图片URL
+  optional string action_url = 7; // 点击跳转URL
+  optional int32 badge = 8;      // 角标数量
+  optional string sound = 9;     // 提示音
+  optional NotificationPriority priority = 10; // 推送优先级
+}
+
+// 批量发送通知请求
+message BatchSendNotificationRequest {
+  repeated string user_ids = 1;  // 用户ID列表
+  NotificationType type = 2;     // 通知类型
+  NotificationChannel channel = 3; // 通知渠道
+  oneof content_source {
+    NotificationContent direct_content = 4; // 直接内容
+    TemplateContent template_content = 5; // 模板内容
+  }
+  optional NotificationPriority priority = 6; // 通知优先级
+  optional string reference_id = 7; // 关联业务ID
+  optional string reference_type = 8; // 关联业务类型
+  map<string, string> metadata = 9; // 元数据
+}
+
+// 获取通知历史请求
+message GetNotificationHistoryRequest {
+  string user_id = 1;            // 用户ID
+  optional NotificationType type = 2; // 通知类型过滤
+  optional NotificationChannel channel = 3; // 通知渠道过滤
+  optional NotificationStatus status = 4; // 通知状态过滤
+  optional common.Timestamp start_time = 5; // 开始时间过滤
+  optional common.Timestamp end_time = 6; // 结束时间过滤
+  common.PageRequest page_request = 7; // 分页请求
+}
+
+// 获取通知模板请求
+message GetNotificationTemplateRequest {
+  string template_id = 1;        // 模板ID
+}
+
+// 创建通知模板请求
+message CreateNotificationTemplateRequest {
+  string template_name = 1;      // 模板名称
+  NotificationType type = 2;     // 通知类型
+  NotificationChannel channel = 3; // 通知渠道
+  string title_template = 4;     // 标题模板
+  string content_template = 5;   // 内容模板
+  repeated string required_params = 6; // 必需参数列表
+  map<string, string> default_params = 7; // 默认参数
+}
+
+// 获取用户通知设置请求
+message GetUserNotificationSettingsRequest {
+  string user_id = 1;            // 用户ID
+}
+
+// 更新用户通知设置请求
+message UpdateUserNotificationSettingsRequest {
+  string user_id = 1;            // 用户ID
+  map<string, bool> type_settings = 2; // 通知类型设置
+  map<string, bool> channel_settings = 3; // 通知渠道设置
+  optional bool global_enabled = 4; // 全局开关
+  optional string timezone = 5; // 时区设置
+  optional int32 quiet_start_hour = 6; // 免打扰开始时间
+  optional int32 quiet_end_hour = 7; // 免打扰结束时间
+}
+
+// 通用发送通知响应
+message SendNotificationResponse {
+  string notification_id = 1;    // 通知ID
+  NotificationStatus status = 2; // 发送状态
+  common.ResponseStatus response_status = 3; // 响应状态
+}
+
+// 发送邮件响应
+message SendEmailResponse {
+  string notification_id = 1;    // 通知ID
+  string message_id = 2;         // 邮件消息ID
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 发送短信响应
+message SendSMSResponse {
+  string notification_id = 1;    // 通知ID
+  string message_id = 2;         // 短信消息ID
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 发送推送响应
+message SendPushNotificationResponse {
+  string notification_id = 1;    // 通知ID
+  string message_id = 2;         // 推送消息ID
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 批量发送响应
+message BatchSendNotificationResponse {
+  repeated string notification_ids = 1; // 通知ID列表
+  int32 success_count = 2;       // 成功数量
+  int32 failed_count = 3;        // 失败数量
+  common.ResponseStatus status = 4; // 响应状态
+}
+
+// 获取通知历史响应
+message GetNotificationHistoryResponse {
+  repeated Notification notifications = 1; // 通知列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用通知模板响应
+message NotificationTemplateResponse {
+  NotificationTemplate template = 1; // 模板信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 获取模板响应
+message GetNotificationTemplateResponse {
+  NotificationTemplate template = 1; // 模板信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 用户通知设置响应
+message UserNotificationSettingsResponse {
+  UserNotificationSettings settings = 1; // 设置信息
+  common.ResponseStatus status = 2; // 响应状态
+}

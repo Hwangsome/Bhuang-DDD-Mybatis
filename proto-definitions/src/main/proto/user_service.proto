@@ -1,0 +1,141 @@
+syntax = "proto3";
+
+package ecommerce.user;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.user.proto";
+option java_outer_classname = "UserServiceProto";
+
+// 用户服务接口
+service UserService {
+  // 创建用户
+  rpc CreateUser(CreateUserRequest) returns (UserResponse);
+  
+  // 获取用户信息
+  rpc GetUser(GetUserRequest) returns (UserResponse);
+  
+  // 批量获取用户信息
+  rpc GetUsersByIds(GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+  
+  // 更新用户信息
+  rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
+  
+  // 用户认证
+  rpc AuthenticateUser(AuthenticateUserRequest) returns (AuthenticateUserResponse);
+  
+  // 搜索用户
+  rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+}
+
+// 用户状态枚举
+enum UserStatus {
+  USER_STATUS_UNSPECIFIED = 0;
+  USER_ACTIVE = 1;           // 活跃
+  USER_INACTIVE = 2;         // 非活跃
+  USER_SUSPENDED = 3;        // 暂停
+  USER_DELETED = 4;          // 已删除
+}
+
+// 用户类型枚举
+enum UserType {
+  USER_TYPE_UNSPECIFIED = 0;
+  CUSTOMER = 1;              // 普通用户
+  VIP_CUSTOMER = 2;          // VIP用户
+  ADMIN = 3;                 // 管理员
+  SUPER_ADMIN = 4;           // 超级管理员
+}
+
+// 用户实体
+message User {
+  string user_id = 1;                    // 用户ID
+  string username = 2;                   // 用户名
+  string email = 3;                      // 邮箱
+  string phone = 4;                      // 手机号
+  string first_name = 5;                 // 名
+  string last_name = 6;                  // 姓
+  string avatar_url = 7;                 // 头像URL
+  UserStatus status = 8;                 // 用户状态
+  UserType type = 9;                     // 用户类型
+  common.Address default_address = 10;   // 默认地址
+  common.Timestamp created_at = 11;      // 创建时间
+  common.Timestamp updated_at = 12;      // 更新时间
+  string created_by = 13;                // 创建人
+  string updated_by = 14;                // 更新人
+}
+
+// 创建用户请求
+message CreateUserRequest {
+  string username = 1;                   // 用户名
+  string email = 2;                      // 邮箱
+  string phone = 3;                      // 手机号
+  string password = 4;                   // 密码(加密后)
+  string first_name = 5;                 // 名
+  string last_name = 6;                  // 姓
+  UserType type = 7;                     // 用户类型
+  common.Address default_address = 8;    // 默认地址
+}
+
+// 获取用户请求
+message GetUserRequest {
+  string user_id = 1;                    // 用户ID
+}
+
+// 批量获取用户请求
+message GetUsersByIdsRequest {
+  repeated string user_ids = 1;          // 用户ID列表
+}
+
+// 批量获取用户响应
+message GetUsersByIdsResponse {
+  repeated User users = 1;               // 用户列表
+  common.ResponseStatus status = 2;      // 响应状态
+}
+
+// 更新用户请求
+message UpdateUserRequest {
+  string user_id = 1;                    // 用户ID
+  optional string email = 2;             // 邮箱
+  optional string phone = 3;             // 手机号
+  optional string first_name = 4;        // 名
+  optional string last_name = 5;         // 姓
+  optional string avatar_url = 6;        // 头像URL
+  optional UserStatus status = 7;        // 用户状态
+  optional common.Address default_address = 8; // 默认地址
+}
+
+// 用户认证请求
+message AuthenticateUserRequest {
+  string username_or_email = 1;          // 用户名或邮箱
+  string password = 2;                   // 密码
+}
+
+// 用户认证响应
+message AuthenticateUserResponse {
+  bool authenticated = 1;                // 是否认证成功
+  User user = 2;                         // 用户信息(认证成功时返回)
+  common.ResponseStatus status = 3;      // 响应状态
+}
+
+// 搜索用户请求
+message SearchUsersRequest {
+  optional string username = 1;          // 用户名模糊搜索
+  optional string email = 2;             // 邮箱模糊搜索
+  optional string phone = 3;             // 手机号搜索
+  optional UserStatus status = 4;        // 用户状态过滤
+  optional UserType type = 5;            // 用户类型过滤
+  common.PageRequest page_request = 6;   // 分页请求
+}
+
+// 搜索用户响应
+message SearchUsersResponse {
+  repeated User users = 1;               // 用户列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3;      // 响应状态
+}
+
+// 通用用户响应
+message UserResponse {
+  User user = 1;                         // 用户信息
+  common.ResponseStatus status = 2;      // 响应状态
+}

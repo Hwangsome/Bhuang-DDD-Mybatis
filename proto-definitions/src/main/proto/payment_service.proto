@@ -1,0 +1,257 @@
+syntax = "proto3";
+
+package ecommerce.payment;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.payment.proto";
+option java_outer_classname = "PaymentServiceProto";
+
+// 支付服务接口
+service PaymentService {
+  // 创建支付订单
+  rpc CreatePayment(CreatePaymentRequest) returns (PaymentResponse);
+  
+  // 获取支付信息
+  rpc GetPayment(GetPaymentRequest) returns (PaymentResponse);
+  
+  // 批量获取支付信息
+  rpc GetPaymentsByIds(GetPaymentsByIdsRequest) returns (GetPaymentsByIdsResponse);
+  
+  // 处理支付
+  rpc ProcessPayment(ProcessPaymentRequest) returns (ProcessPaymentResponse);
+  
+  // 获取支付状态
+  rpc GetPaymentStatus(GetPaymentStatusRequest) returns (PaymentStatusResponse);
+  
+  // 处理退款
+  rpc ProcessRefund(ProcessRefundRequest) returns (RefundResponse);
+  
+  // 获取退款信息
+  rpc GetRefund(GetRefundRequest) returns (RefundResponse);
+  
+  // 获取支付记录
+  rpc GetPaymentRecords(GetPaymentRecordsRequest) returns (GetPaymentRecordsResponse);
+  
+  // 支付回调处理
+  rpc HandlePaymentCallback(PaymentCallbackRequest) returns (PaymentCallbackResponse);
+}
+
+// 支付状态枚举
+enum PaymentStatus {
+  PAYMENT_STATUS_UNSPECIFIED = 0;
+  PAYMENT_PENDING = 1;           // 待支付
+  PAYMENT_PROCESSING = 2;        // 支付处理中
+  PAYMENT_SUCCESS = 3;           // 支付成功
+  PAYMENT_FAILED = 4;            // 支付失败
+  PAYMENT_CANCELLED = 5;         // 支付取消
+  PAYMENT_REFUNDED = 6;          // 已退款
+  PAYMENT_PARTIAL_REFUNDED = 7;  // 部分退款
+}
+
+// 支付方式枚举
+enum PaymentMethod {
+  PAYMENT_METHOD_UNSPECIFIED = 0;
+  ALIPAY = 1;                    // 支付宝
+  WECHAT_PAY = 2;                // 微信支付
+  UNION_PAY = 3;                 // 银联支付
+  CREDIT_CARD = 4;               // 信用卡
+  DEBIT_CARD = 5;                // 借记卡
+  PAYPAL = 6;                    // PayPal
+  APPLE_PAY = 7;                 // Apple Pay
+  GOOGLE_PAY = 8;                // Google Pay
+}
+
+// 退款状态枚举
+enum RefundStatus {
+  REFUND_STATUS_UNSPECIFIED = 0;
+  REFUND_PENDING = 1;            // 退款申请中
+  REFUND_PROCESSING = 2;         // 退款处理中
+  REFUND_SUCCESS = 3;            // 退款成功
+  REFUND_FAILED = 4;             // 退款失败
+  REFUND_REJECTED = 5;           // 退款被拒绝
+}
+
+// 支付记录类型枚举
+enum PaymentRecordType {
+  PAYMENT_RECORD_TYPE_UNSPECIFIED = 0;
+  PAYMENT_CREATED = 1;           // 支付订单创建
+  PAYMENT_STARTED = 2;           // 支付开始
+  PAYMENT_COMPLETED = 3;         // 支付完成
+  PAYMENT_FAILED_RECORD = 4;     // 支付失败
+  REFUND_STARTED = 5;            // 退款开始
+  REFUND_COMPLETED = 6;          // 退款完成
+  CALLBACK_RECEIVED = 7;         // 回调接收
+}
+
+// 支付实体
+message Payment {
+  string payment_id = 1;         // 支付ID
+  string payment_number = 2;     // 支付单号
+  string order_id = 3;           // 订单ID
+  string user_id = 4;            // 用户ID
+  PaymentMethod payment_method = 5; // 支付方式
+  PaymentStatus status = 6;      // 支付状态
+  common.Money amount = 7;       // 支付金额
+  common.Money paid_amount = 8;  // 已支付金额
+  common.Money refund_amount = 9; // 退款金额
+  string third_party_transaction_id = 10; // 第三方交易ID
+  string third_party_payment_id = 11; // 第三方支付ID
+  map<string, string> payment_details = 12; // 支付详情 (扩展信息)
+  common.Timestamp payment_time = 13; // 支付时间
+  common.Timestamp expire_time = 14; // 支付过期时间
+  common.Timestamp created_at = 15; // 创建时间
+  common.Timestamp updated_at = 16; // 更新时间
+  string created_by = 17;        // 创建人
+  string updated_by = 18;        // 更新人
+}
+
+// 退款实体
+message Refund {
+  string refund_id = 1;          // 退款ID
+  string refund_number = 2;      // 退款单号
+  string payment_id = 3;         // 支付ID
+  string order_id = 4;           // 订单ID
+  string user_id = 5;            // 用户ID
+  RefundStatus status = 6;       // 退款状态
+  common.Money refund_amount = 7; // 退款金额
+  string refund_reason = 8;      // 退款原因
+  string third_party_refund_id = 9; // 第三方退款ID
+  map<string, string> refund_details = 10; // 退款详情
+  common.Timestamp refund_time = 11; // 退款时间
+  common.Timestamp created_at = 12; // 创建时间
+  common.Timestamp updated_at = 13; // 更新时间
+  string created_by = 14;        // 创建人
+  string updated_by = 15;        // 更新人
+}
+
+// 支付记录
+message PaymentRecord {
+  string record_id = 1;          // 记录ID
+  string payment_id = 2;         // 支付ID
+  PaymentRecordType record_type = 3; // 记录类型
+  PaymentStatus status = 4;      // 状态
+  string message = 5;            // 消息内容
+  string third_party_response = 6; // 第三方响应
+  map<string, string> metadata = 7; // 元数据
+  common.Timestamp created_at = 8; // 创建时间
+}
+
+// 创建支付请求
+message CreatePaymentRequest {
+  string order_id = 1;           // 订单ID
+  string user_id = 2;            // 用户ID
+  PaymentMethod payment_method = 3; // 支付方式
+  common.Money amount = 4;       // 支付金额
+  optional string return_url = 5; // 支付成功返回URL
+  optional string cancel_url = 6; // 支付取消返回URL
+  optional string notify_url = 7; // 支付回调URL
+  optional int64 expire_minutes = 8; // 支付过期时间(分钟)
+  optional string description = 9; // 支付描述
+  map<string, string> extra_params = 10; // 额外参数
+}
+
+// 获取支付请求
+message GetPaymentRequest {
+  string payment_id = 1;         // 支付ID
+}
+
+// 批量获取支付请求
+message GetPaymentsByIdsRequest {
+  repeated string payment_ids = 1; // 支付ID列表
+}
+
+// 批量获取支付响应
+message GetPaymentsByIdsResponse {
+  repeated Payment payments = 1; // 支付列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 处理支付请求
+message ProcessPaymentRequest {
+  string payment_id = 1;         // 支付ID
+  map<string, string> payment_params = 2; // 支付参数 (第三方支付所需)
+  optional string client_ip = 3; // 客户端IP
+  optional string user_agent = 4; // 用户代理
+}
+
+// 处理支付响应
+message ProcessPaymentResponse {
+  string payment_id = 1;         // 支付ID
+  PaymentStatus status = 2;      // 支付状态
+  string payment_url = 3;        // 支付URL (跳转支付)
+  string qr_code = 4;            // 二维码内容 (扫码支付)
+  map<string, string> payment_data = 5; // 支付数据 (SDK支付)
+  common.ResponseStatus response_status = 6; // 响应状态
+}
+
+// 获取支付状态请求
+message GetPaymentStatusRequest {
+  string payment_id = 1;         // 支付ID
+}
+
+// 获取支付状态响应
+message PaymentStatusResponse {
+  string payment_id = 1;         // 支付ID
+  PaymentStatus status = 2;      // 支付状态
+  common.Money paid_amount = 3;  // 已支付金额
+  common.Timestamp payment_time = 4; // 支付时间
+  common.ResponseStatus response_status = 5; // 响应状态
+}
+
+// 处理退款请求
+message ProcessRefundRequest {
+  string payment_id = 1;         // 支付ID
+  common.Money refund_amount = 2; // 退款金额
+  string refund_reason = 3;      // 退款原因
+  optional string operator_id = 4; // 操作人ID
+  map<string, string> extra_params = 5; // 额外参数
+}
+
+// 获取退款请求
+message GetRefundRequest {
+  string refund_id = 1;          // 退款ID
+}
+
+// 获取支付记录请求
+message GetPaymentRecordsRequest {
+  optional string payment_id = 1; // 支付ID过滤
+  optional PaymentRecordType record_type = 2; // 记录类型过滤
+  optional common.Timestamp start_time = 3; // 开始时间过滤
+  optional common.Timestamp end_time = 4; // 结束时间过滤
+  common.PageRequest page_request = 5; // 分页请求
+}
+
+// 获取支付记录响应
+message GetPaymentRecordsResponse {
+  repeated PaymentRecord records = 1; // 支付记录列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 支付回调请求
+message PaymentCallbackRequest {
+  PaymentMethod payment_method = 1; // 支付方式
+  string callback_data = 2;      // 回调原始数据
+  map<string, string> headers = 3; // HTTP头信息
+  string signature = 4;          // 签名
+}
+
+// 支付回调响应
+message PaymentCallbackResponse {
+  bool success = 1;              // 处理是否成功
+  string response_body = 2;      // 回调响应内容
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用支付响应
+message PaymentResponse {
+  Payment payment = 1;           // 支付信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用退款响应
+message RefundResponse {
+  Refund refund = 1;             // 退款信息
+  common.ResponseStatus status = 2; // 响应状态
+}

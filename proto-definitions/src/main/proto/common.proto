@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package ecommerce.common;
+
+option java_package = "com.ecommerce.common.proto";
+option java_outer_classname = "CommonProto";
+
+// 通用分页请求
+message PageRequest {
+  int32 page_number = 1;    // 页码，从1开始
+  int32 page_size = 2;      // 每页大小，默认20
+  string sort_by = 3;       // 排序字段
+  string sort_direction = 4; // ASC/DESC
+}
+
+// 通用分页响应
+message PageResponse {
+  int32 total_elements = 1;  // 总记录数
+  int32 total_pages = 2;     // 总页数
+  int32 current_page = 3;    // 当前页
+  int32 page_size = 4;       // 每页大小
+  bool has_next = 5;         // 是否有下一页
+  bool has_previous = 6;     // 是否有上一页
+}
+
+// 金额类型
+message Money {
+  int64 amount = 1;          // 金额分为单位 (避免浮点精度问题)
+  string currency = 2;       // 货币代码 (USD, CNY等)
+}
+
+// 时间戳扩展
+message Timestamp {
+  int64 seconds = 1;         // Unix时间戳秒
+  int32 nanos = 2;           // 纳秒部分
+}
+
+// 地址信息
+message Address {
+  string country = 1;        // 国家
+  string province = 2;       // 省份
+  string city = 3;           // 城市
+  string district = 4;       // 区县
+  string street = 5;         // 街道详细地址
+  string postal_code = 6;    // 邮政编码
+  string contact_name = 7;   // 联系人姓名
+  string contact_phone = 8;  // 联系人电话
+}
+
+// 通用状态枚举
+enum CommonStatus {
+  COMMON_STATUS_UNSPECIFIED = 0;
+  ACTIVE = 1;                // 活跃
+  INACTIVE = 2;              // 非活跃
+  DELETED = 3;               // 已删除
+  SUSPENDED = 4;             // 暂停
+}
+
+// 通用响应状态
+message ResponseStatus {
+  int32 code = 1;            // 状态码
+  string message = 2;        // 状态消息
+  bool success = 3;          // 是否成功
+}
+
+// 通用ID类型
+message EntityId {
+  string id = 1;             // 统一使用字符串ID
+  string type = 2;           // ID类型标识
+}

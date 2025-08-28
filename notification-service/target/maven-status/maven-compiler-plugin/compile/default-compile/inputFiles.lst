@@ -1,0 +1,16 @@
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/mapper/NotificationDataMapper.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/valueobject/UserId.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/valueobject/NotificationType.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/repository/NotificationRepositoryImpl.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/interfaces/converter/NotificationProtoConverter.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/entity/Notification.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/entity/NotificationStatus.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/NotificationServiceApplication.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/config/MyBatisPlusConfig.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/mapper/NotificationDataMapperImpl.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/valueobject/NotificationChannel.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/repository/NotificationRepository.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/entity/NotificationPO.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/domain/valueobject/NotificationId.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/interfaces/grpc/NotificationGrpcServiceImpl.java
+/Users/bhuang/code/Bhuang-DDD-Mybatis/notification-service/src/main/java/com/ecommerce/notification/infrastructure/mapper/NotificationPlusMapper.java

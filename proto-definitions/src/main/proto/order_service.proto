@@ -1,0 +1,225 @@
+syntax = "proto3";
+
+package ecommerce.order;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.order.proto";
+option java_outer_classname = "OrderServiceProto";
+
+// 订单服务接口
+service OrderService {
+  // 创建订单
+  rpc CreateOrder(CreateOrderRequest) returns (OrderResponse);
+  
+  // 获取订单信息
+  rpc GetOrder(GetOrderRequest) returns (OrderResponse);
+  
+  // 批量获取订单信息
+  rpc GetOrdersByIds(GetOrdersByIdsRequest) returns (GetOrdersByIdsResponse);
+  
+  // 获取用户订单列表
+  rpc GetUserOrders(GetUserOrdersRequest) returns (GetUserOrdersResponse);
+  
+  // 更新订单状态
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (OrderResponse);
+  
+  // 取消订单
+  rpc CancelOrder(CancelOrderRequest) returns (CancelOrderResponse);
+  
+  // 搜索订单
+  rpc SearchOrders(SearchOrdersRequest) returns (SearchOrdersResponse);
+  
+  // 获取订单统计
+  rpc GetOrderStatistics(GetOrderStatisticsRequest) returns (GetOrderStatisticsResponse);
+}
+
+// 订单状态枚举
+enum OrderStatus {
+  ORDER_STATUS_UNSPECIFIED = 0;
+  ORDER_PENDING = 1;             // 待付款
+  ORDER_PAID = 2;                // 已付款
+  ORDER_CONFIRMED = 3;           // 已确认
+  ORDER_SHIPPED = 4;             // 已发货
+  ORDER_DELIVERED = 5;           // 已送达
+  ORDER_COMPLETED = 6;           // 已完成
+  ORDER_CANCELLED = 7;           // 已取消
+  ORDER_REFUNDED = 8;            // 已退款
+}
+
+// 订单类型枚举
+enum OrderType {
+  ORDER_TYPE_UNSPECIFIED = 0;
+  NORMAL_ORDER = 1;              // 普通订单
+  PRE_ORDER = 2;                 // 预订单
+  GROUP_ORDER = 3;               // 团购订单
+  FLASH_SALE_ORDER = 4;          // 秒杀订单
+}
+
+// 订单项实体
+message OrderItem {
+  string order_item_id = 1;      // 订单项ID
+  string order_id = 2;           // 订单ID
+  string sku_id = 3;             // SKU ID
+  string product_name = 4;       // 商品名称
+  string sku_name = 5;           // SKU名称
+  string image_url = 6;          // 商品图片
+  int32 quantity = 7;            // 购买数量
+  common.Money unit_price = 8;   // 单价
+  common.Money total_price = 9;  // 小计
+  common.Money original_price = 10; // 原价
+  common.Money discount_amount = 11; // 折扣金额
+  map<string, string> sku_attributes = 12; // SKU属性 (颜色:红色, 尺寸:XL)
+}
+
+// 订单实体
+message Order {
+  string order_id = 1;           // 订单ID
+  string order_number = 2;       // 订单号
+  string user_id = 3;            // 用户ID
+  OrderStatus status = 4;        // 订单状态
+  OrderType type = 5;            // 订单类型
+  common.Money total_amount = 6; // 订单总金额
+  common.Money product_amount = 7; // 商品金额
+  common.Money discount_amount = 8; // 折扣金额
+  common.Money shipping_amount = 9; // 运费
+  common.Money tax_amount = 10;  // 税费
+  repeated OrderItem items = 11; // 订单项列表
+  common.Address shipping_address = 12; // 收货地址
+  string remark = 13;            // 订单备注
+  string coupon_id = 14;         // 优惠券ID
+  common.Timestamp order_time = 15; // 下单时间
+  common.Timestamp paid_time = 16; // 付款时间
+  common.Timestamp shipped_time = 17; // 发货时间
+  common.Timestamp delivered_time = 18; // 送达时间
+  common.Timestamp completed_time = 19; // 完成时间
+  common.Timestamp cancelled_time = 20; // 取消时间
+  string cancel_reason = 21;     // 取消原因
+  common.Timestamp created_at = 22; // 创建时间
+  common.Timestamp updated_at = 23; // 更新时间
+  string created_by = 24;        // 创建人
+  string updated_by = 25;        // 更新人
+}
+
+// 创建订单项请求
+message CreateOrderItemRequest {
+  string sku_id = 1;             // SKU ID
+  int32 quantity = 2;            // 购买数量
+}
+
+// 创建订单请求
+message CreateOrderRequest {
+  string user_id = 1;            // 用户ID
+  repeated CreateOrderItemRequest items = 2; // 订单项列表
+  common.Address shipping_address = 3; // 收货地址
+  optional string remark = 4;    // 订单备注
+  optional string coupon_id = 5; // 优惠券ID
+  optional OrderType type = 6;   // 订单类型
+}
+
+// 获取订单请求
+message GetOrderRequest {
+  string order_id = 1;           // 订单ID
+  bool include_items = 2;        // 是否包含订单项
+}
+
+// 批量获取订单请求
+message GetOrdersByIdsRequest {
+  repeated string order_ids = 1; // 订单ID列表
+  bool include_items = 2;        // 是否包含订单项
+}
+
+// 批量获取订单响应
+message GetOrdersByIdsResponse {
+  repeated Order orders = 1;     // 订单列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 获取用户订单请求
+message GetUserOrdersRequest {
+  string user_id = 1;            // 用户ID
+  optional OrderStatus status = 2; // 订单状态过滤
+  optional OrderType type = 3;   // 订单类型过滤
+  common.PageRequest page_request = 4; // 分页请求
+}
+
+// 获取用户订单响应
+message GetUserOrdersResponse {
+  repeated Order orders = 1;     // 订单列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 更新订单状态请求
+message UpdateOrderStatusRequest {
+  string order_id = 1;           // 订单ID
+  OrderStatus status = 2;        // 新状态
+  optional string operator_id = 3; // 操作人ID
+  optional string remark = 4;    // 备注
+}
+
+// 取消订单请求
+message CancelOrderRequest {
+  string order_id = 1;           // 订单ID
+  string cancel_reason = 2;      // 取消原因
+  optional string operator_id = 3; // 操作人ID
+}
+
+// 取消订单响应
+message CancelOrderResponse {
+  Order order = 1;               // 订单信息
+  bool refund_required = 2;      // 是否需要退款
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 搜索订单请求
+message SearchOrdersRequest {
+  optional string order_number = 1; // 订单号搜索
+  optional string user_id = 2;   // 用户ID过滤
+  optional OrderStatus status = 3; // 订单状态过滤
+  optional OrderType type = 4;   // 订单类型过滤
+  optional common.Timestamp start_time = 5; // 开始时间过滤
+  optional common.Timestamp end_time = 6; // 结束时间过滤
+  optional common.Money min_amount = 7; // 最小金额过滤
+  optional common.Money max_amount = 8; // 最大金额过滤
+  common.PageRequest page_request = 9; // 分页请求
+}
+
+// 搜索订单响应
+message SearchOrdersResponse {
+  repeated Order orders = 1;     // 订单列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 订单统计信息
+message OrderStatistics {
+  int64 total_count = 1;         // 总订单数
+  common.Money total_amount = 2; // 总订单金额
+  int64 pending_count = 3;       // 待付款订单数
+  int64 paid_count = 4;          // 已付款订单数
+  int64 shipped_count = 5;       // 已发货订单数
+  int64 completed_count = 6;     // 已完成订单数
+  int64 cancelled_count = 7;     // 已取消订单数
+  double completion_rate = 8;    // 完成率
+  double cancellation_rate = 9;  // 取消率
+}
+
+// 获取订单统计请求
+message GetOrderStatisticsRequest {
+  optional string user_id = 1;   // 用户ID过滤 (可选，管理员查看全部)
+  optional common.Timestamp start_time = 2; // 开始时间
+  optional common.Timestamp end_time = 3; // 结束时间
+}
+
+// 获取订单统计响应
+message GetOrderStatisticsResponse {
+  OrderStatistics statistics = 1; // 统计信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用订单响应
+message OrderResponse {
+  Order order = 1;               // 订单信息
+  common.ResponseStatus status = 2; // 响应状态
+}

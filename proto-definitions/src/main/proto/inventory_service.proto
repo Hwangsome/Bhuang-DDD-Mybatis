@@ -1,0 +1,210 @@
+syntax = "proto3";
+
+package ecommerce.inventory;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.inventory.proto";
+option java_outer_classname = "InventoryServiceProto";
+
+// 库存服务接口
+service InventoryService {
+  // 获取库存信息
+  rpc GetInventory(GetInventoryRequest) returns (InventoryResponse);
+  
+  // 批量获取库存信息
+  rpc GetInventoriesBySkuIds(GetInventoriesBySkuIdsRequest) returns (GetInventoriesBySkuIdsResponse);
+  
+  // 更新库存数量
+  rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
+  
+  // 预占库存
+  rpc ReserveStock(ReserveStockRequest) returns (ReserveStockResponse);
+  
+  // 释放库存
+  rpc ReleaseStock(ReleaseStockRequest) returns (ReleaseStockResponse);
+  
+  // 确认库存消耗
+  rpc ConfirmStock(ConfirmStockRequest) returns (ConfirmStockResponse);
+  
+  // 获取库存变更记录
+  rpc GetStockRecords(GetStockRecordsRequest) returns (GetStockRecordsResponse);
+  
+  // 库存盘点
+  rpc StockCheck(StockCheckRequest) returns (StockCheckResponse);
+}
+
+// 库存变更类型枚举
+enum StockChangeType {
+  STOCK_CHANGE_TYPE_UNSPECIFIED = 0;
+  STOCK_IN = 1;                  // 入库
+  STOCK_OUT = 2;                 // 出库
+  STOCK_RESERVE = 3;             // 预占
+  STOCK_RELEASE = 4;             // 释放
+  STOCK_CONFIRM = 5;             // 确认消耗
+  STOCK_ADJUST = 6;              // 调整
+  STOCK_CHECK = 7;               // 盘点
+}
+
+// 库存级别枚举
+enum StockLevel {
+  STOCK_LEVEL_UNSPECIFIED = 0;
+  ABUNDANT = 1;                  // 充足 (>100)
+  SUFFICIENT = 2;                // 充足 (50-100)
+  LOW = 3;                       // 偏低 (10-50)
+  VERY_LOW = 4;                  // 很低 (1-10)
+  OUT_OF_STOCK = 5;              // 缺货 (0)
+}
+
+// 库存实体
+message Inventory {
+  string sku_id = 1;             // SKU ID
+  int64 available_quantity = 2;   // 可用数量
+  int64 reserved_quantity = 3;    // 预占数量
+  int64 total_quantity = 4;       // 总数量 (可用+预占)
+  int64 safe_stock = 5;           // 安全库存
+  int64 max_stock = 6;            // 最大库存
+  StockLevel stock_level = 7;     // 库存级别
+  string warehouse_code = 8;      // 仓库编码
+  common.Timestamp created_at = 9; // 创建时间
+  common.Timestamp updated_at = 10; // 更新时间
+}
+
+// 库存变更记录
+message StockRecord {
+  string record_id = 1;          // 记录ID
+  string sku_id = 2;             // SKU ID
+  StockChangeType change_type = 3; // 变更类型
+  int64 change_quantity = 4;      // 变更数量 (正数为增加,负数为减少)
+  int64 before_quantity = 5;      // 变更前数量
+  int64 after_quantity = 6;       // 变更后数量
+  string reason = 7;              // 变更原因
+  string reference_id = 8;        // 关联ID (订单ID、盘点ID等)
+  string operator_id = 9;         // 操作人ID
+  string warehouse_code = 10;     // 仓库编码
+  common.Timestamp created_at = 11; // 创建时间
+}
+
+// 获取库存请求
+message GetInventoryRequest {
+  string sku_id = 1;             // SKU ID
+  optional string warehouse_code = 2; // 仓库编码
+}
+
+// 批量获取库存请求
+message GetInventoriesBySkuIdsRequest {
+  repeated string sku_ids = 1;   // SKU ID列表
+  optional string warehouse_code = 2; // 仓库编码
+}
+
+// 批量获取库存响应
+message GetInventoriesBySkuIdsResponse {
+  repeated Inventory inventories = 1; // 库存列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 更新库存请求
+message UpdateStockRequest {
+  string sku_id = 1;             // SKU ID
+  int64 change_quantity = 2;      // 变更数量 (正数为增加,负数为减少)
+  StockChangeType change_type = 3; // 变更类型
+  string reason = 4;              // 变更原因
+  optional string reference_id = 5; // 关联ID
+  optional string operator_id = 6; // 操作人ID
+  optional string warehouse_code = 7; // 仓库编码
+}
+
+// 预占库存请求
+message ReserveStockRequest {
+  string sku_id = 1;             // SKU ID
+  int64 reserve_quantity = 2;     // 预占数量
+  string reference_id = 3;        // 关联订单ID
+  string operator_id = 4;         // 操作人ID
+  optional string warehouse_code = 5; // 仓库编码
+  optional int64 expire_seconds = 6; // 预占过期时间(秒)
+}
+
+// 释放库存请求
+message ReleaseStockRequest {
+  string sku_id = 1;             // SKU ID
+  int64 release_quantity = 2;     // 释放数量
+  string reference_id = 3;        // 关联订单ID
+  string operator_id = 4;         // 操作人ID
+  optional string warehouse_code = 5; // 仓库编码
+}
+
+// 确认库存消耗请求
+message ConfirmStockRequest {
+  string sku_id = 1;             // SKU ID
+  int64 confirm_quantity = 2;     // 确认消耗数量
+  string reference_id = 3;        // 关联订单ID
+  string operator_id = 4;         // 操作人ID
+  optional string warehouse_code = 5; // 仓库编码
+}
+
+// 获取库存记录请求
+message GetStockRecordsRequest {
+  optional string sku_id = 1;    // SKU ID过滤
+  optional StockChangeType change_type = 2; // 变更类型过滤
+  optional string reference_id = 3; // 关联ID过滤
+  optional string operator_id = 4; // 操作人ID过滤
+  optional string warehouse_code = 5; // 仓库编码过滤
+  common.PageRequest page_request = 6; // 分页请求
+}
+
+// 获取库存记录响应
+message GetStockRecordsResponse {
+  repeated StockRecord records = 1; // 库存记录列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 库存盘点请求
+message StockCheckRequest {
+  string sku_id = 1;             // SKU ID
+  int64 actual_quantity = 2;      // 实际盘点数量
+  string operator_id = 3;         // 操作人ID
+  optional string warehouse_code = 4; // 仓库编码
+  optional string remark = 5;     // 盘点备注
+}
+
+// 通用库存响应
+message InventoryResponse {
+  Inventory inventory = 1;        // 库存信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用更新库存响应
+message UpdateStockResponse {
+  Inventory inventory = 1;        // 更新后的库存信息
+  StockRecord record = 2;         // 库存变更记录
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用预占库存响应
+message ReserveStockResponse {
+  Inventory inventory = 1;        // 库存信息
+  StockRecord record = 2;         // 库存变更记录
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用释放库存响应
+message ReleaseStockResponse {
+  Inventory inventory = 1;        // 库存信息
+  StockRecord record = 2;         // 库存变更记录
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用确认库存响应
+message ConfirmStockResponse {
+  Inventory inventory = 1;        // 库存信息
+  StockRecord record = 2;         // 库存变更记录
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 通用库存盘点响应
+message StockCheckResponse {
+  Inventory inventory = 1;        // 盘点后的库存信息
+  StockRecord record = 2;         // 库存变更记录
+  common.ResponseStatus status = 3; // 响应状态
+}

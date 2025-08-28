@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package ecommerce.product;
+
+import "common.proto";
+
+option java_package = "com.ecommerce.product.proto";
+option java_outer_classname = "ProductServiceProto";
+
+// 商品服务接口
+service ProductService {
+  // 创建商品
+  rpc CreateProduct(CreateProductRequest) returns (ProductResponse);
+  
+  // 获取商品信息
+  rpc GetProduct(GetProductRequest) returns (ProductResponse);
+  
+  // 批量获取商品信息
+  rpc GetProductsByIds(GetProductsByIdsRequest) returns (GetProductsByIdsResponse);
+  
+  // 更新商品信息
+  rpc UpdateProduct(UpdateProductRequest) returns (ProductResponse);
+  
+  // 搜索商品
+  rpc SearchProducts(SearchProductsRequest) returns (SearchProductsResponse);
+  
+  // 获取分类列表
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse);
+  
+  // 创建分类
+  rpc CreateCategory(CreateCategoryRequest) returns (CategoryResponse);
+  
+  // 获取SKU信息
+  rpc GetProductSku(GetProductSkuRequest) returns (ProductSkuResponse);
+  
+  // 批量获取SKU信息
+  rpc GetProductSkusByIds(GetProductSkusByIdsRequest) returns (GetProductSkusByIdsResponse);
+}
+
+// 商品状态枚举
+enum ProductStatus {
+  PRODUCT_STATUS_UNSPECIFIED = 0;
+  PRODUCT_DRAFT = 1;             // 草稿
+  PRODUCT_ACTIVE = 2;            // 上架
+  PRODUCT_INACTIVE = 3;          // 下架
+  PRODUCT_OUT_OF_STOCK = 4;      // 缺货
+  PRODUCT_DELETED = 5;           // 已删除
+}
+
+// 商品分类
+message Category {
+  string category_id = 1;        // 分类ID
+  string name = 2;               // 分类名称
+  string parent_id = 3;          // 父分类ID (空表示顶级分类)
+  int32 level = 4;               // 分类层级
+  int32 sort_order = 5;          // 排序顺序
+  common.CommonStatus status = 6; // 分类状态
+  common.Timestamp created_at = 7; // 创建时间
+  common.Timestamp updated_at = 8; // 更新时间
+}
+
+// 商品规格
+message ProductSpecification {
+  string spec_name = 1;          // 规格名称 (如: 颜色、尺寸)
+  string spec_value = 2;         // 规格值 (如: 红色、XL)
+}
+
+// 商品SKU
+message ProductSku {
+  string sku_id = 1;                           // SKU ID
+  string product_id = 2;                       // 商品ID
+  string sku_code = 3;                         // SKU编码
+  repeated ProductSpecification specifications = 4; // 规格列表
+  common.Money price = 5;                      // 价格
+  common.Money original_price = 6;             // 原价
+  string image_url = 7;                        // SKU图片URL
+  ProductStatus status = 8;                    // SKU状态
+  common.Timestamp created_at = 9;             // 创建时间
+  common.Timestamp updated_at = 10;            // 更新时间
+}
+
+// 商品实体
+message Product {
+  string product_id = 1;         // 商品ID
+  string name = 2;               // 商品名称
+  string description = 3;        // 商品描述
+  string category_id = 4;        // 分类ID
+  repeated string image_urls = 5; // 商品图片URL列表
+  string detail_html = 6;        // 商品详情HTML
+  ProductStatus status = 7;      // 商品状态
+  common.Money min_price = 8;    // 最低价格
+  common.Money max_price = 9;    // 最高价格
+  repeated ProductSku skus = 10; // SKU列表
+  map<string, string> attributes = 11; // 商品属性(品牌、材质等)
+  common.Timestamp created_at = 12; // 创建时间
+  common.Timestamp updated_at = 13; // 更新时间
+  string created_by = 14;        // 创建人
+  string updated_by = 15;        // 更新人
+}
+
+// 创建商品请求
+message CreateProductRequest {
+  string name = 1;               // 商品名称
+  string description = 2;        // 商品描述
+  string category_id = 3;        // 分类ID
+  repeated string image_urls = 4; // 商品图片URL列表
+  string detail_html = 5;        // 商品详情HTML
+  repeated CreateProductSkuRequest skus = 6; // SKU列表
+  map<string, string> attributes = 7; // 商品属性
+}
+
+// 创建SKU请求
+message CreateProductSkuRequest {
+  string sku_code = 1;                         // SKU编码
+  repeated ProductSpecification specifications = 2; // 规格列表
+  common.Money price = 3;                      // 价格
+  common.Money original_price = 4;             // 原价
+  string image_url = 5;                        // SKU图片URL
+}
+
+// 获取商品请求
+message GetProductRequest {
+  string product_id = 1;         // 商品ID
+  bool include_skus = 2;         // 是否包含SKU信息
+}
+
+// 批量获取商品请求
+message GetProductsByIdsRequest {
+  repeated string product_ids = 1; // 商品ID列表
+  bool include_skus = 2;         // 是否包含SKU信息
+}
+
+// 批量获取商品响应
+message GetProductsByIdsResponse {
+  repeated Product products = 1;  // 商品列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 更新商品请求
+message UpdateProductRequest {
+  string product_id = 1;         // 商品ID
+  optional string name = 2;      // 商品名称
+  optional string description = 3; // 商品描述
+  optional string category_id = 4; // 分类ID
+  repeated string image_urls = 5; // 商品图片URL列表
+  optional string detail_html = 6; // 商品详情HTML
+  optional ProductStatus status = 7; // 商品状态
+  map<string, string> attributes = 8; // 商品属性
+}
+
+// 搜索商品请求
+message SearchProductsRequest {
+  optional string keyword = 1;   // 关键词搜索
+  optional string category_id = 2; // 分类过滤
+  optional ProductStatus status = 3; // 状态过滤
+  optional common.Money min_price = 4; // 最低价格过滤
+  optional common.Money max_price = 5; // 最高价格过滤
+  common.PageRequest page_request = 6; // 分页请求
+}
+
+// 搜索商品响应
+message SearchProductsResponse {
+  repeated Product products = 1;  // 商品列表
+  common.PageResponse page_response = 2; // 分页响应
+  common.ResponseStatus status = 3; // 响应状态
+}
+
+// 获取分类请求
+message GetCategoriesRequest {
+  optional string parent_id = 1; // 父分类ID (空表示获取顶级分类)
+  bool include_children = 2;     // 是否包含子分类
+}
+
+// 获取分类响应
+message GetCategoriesResponse {
+  repeated Category categories = 1; // 分类列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 创建分类请求
+message CreateCategoryRequest {
+  string name = 1;               // 分类名称
+  optional string parent_id = 2; // 父分类ID
+  optional int32 sort_order = 3; // 排序顺序
+}
+
+// 获取SKU请求
+message GetProductSkuRequest {
+  string sku_id = 1;             // SKU ID
+}
+
+// 批量获取SKU请求
+message GetProductSkusByIdsRequest {
+  repeated string sku_ids = 1;   // SKU ID列表
+}
+
+// 批量获取SKU响应
+message GetProductSkusByIdsResponse {
+  repeated ProductSku skus = 1;  // SKU列表
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用商品响应
+message ProductResponse {
+  Product product = 1;           // 商品信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用分类响应
+message CategoryResponse {
+  Category category = 1;         // 分类信息
+  common.ResponseStatus status = 2; // 响应状态
+}
+
+// 通用SKU响应
+message ProductSkuResponse {
+  ProductSku sku = 1;            // SKU信息
+  common.ResponseStatus status = 2; // 响应状态
+}
